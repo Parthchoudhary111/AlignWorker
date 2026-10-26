@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: alignworker
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: GEMINI_API_KEY
+        sync: false
+    healthCheckPath: /

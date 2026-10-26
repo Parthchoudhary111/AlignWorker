@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Ingest Invoice // AlignWorker ERP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-9 col-lg-8">
+        <div class="glass-panel p-4 p-md-5 position-relative overflow-hidden" style="border: 1px solid rgba(0, 245, 255, 0.3);">
+            <!-- Futuristic Ambient Corner Accents -->
+            <div style="position: absolute; top: 0; left: 0; width: 24px; height: 24px; border-top: 2px solid var(--cyan-core); border-left: 2px solid var(--cyan-core);"></div>
+            <div style="position: absolute; top: 0; right: 0; width: 24px; height: 24px; border-top: 2px solid var(--cyan-core); border-right: 2px solid var(--cyan-core);"></div>
+            <div style="position: absolute; bottom: 0; left: 0; width: 24px; height: 24px; border-bottom: 2px solid var(--cyan-core); border-left: 2px solid var(--cyan-core);"></div>
+            <div style="position: absolute; bottom: 0; right: 0; width: 24px; height: 24px; border-bottom: 2px solid var(--cyan-core); border-right: 2px solid var(--cyan-core);"></div>
+
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width: 40px; height: 40px; background: rgba(0, 245, 255, 0.1); border: 1px solid var(--cyan-core); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-file-invoice-dollar text-info fs-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-hud text-white mb-0" style="font-size: 1.25rem;">
+                            ENTERPRISE INVOICE <span style="color: var(--cyan-core);">INGESTION TERMINAL</span>
+                        </h4>
+                        <div class="font-mono text-dim" style="font-size: 0.72rem;">
+                            SECURE TRANSACTION REGISTER // SHA-256 AUDIT LOGGED
+                        </div>
+                    </div>
+                </div>
+                <span class="cyber-badge badge-cyan font-mono d-none d-sm-inline-block">FORM V2.4-SECURE</span>
+            </div>
+
+            <hr style="border-color: rgba(255, 255, 255, 0.1); margin: 20px 0 25px 0;">
+
+            {% if error_message %}
+            <div id="error-banner" class="alert alert-danger d-flex align-items-center mb-4 font-mono" role="alert" 
+                 style="background: rgba(244, 63, 94, 0.15); border: 1px solid var(--rose-core); color: #fff; border-radius: 8px;">
+                <i class="fa-solid fa-triangle-exclamation text-danger fs-4 me-3"></i>
+                <div>
+                    <strong class="text-danger">⚠️ SUBMISSION REJECTED:</strong> {{ error_message }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if success_message %}
+            <div id="success-banner" class="alert alert-success d-flex align-items-center mb-4 font-mono" role="alert"
+                 style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--emerald-core); color: #fff; border-radius: 8px;">
+                <i class="fa-solid fa-circle-check text-success fs-4 me-3"></i>
+                <div>
+                    <strong class="text-success">✅ TRANSACTION COMMITTED:</strong> {{ success_message }}
+                </div>
+            </div>
+            {% endif %}
+
+            <form action="/invoices/new" method="POST" id="invoice-form">
+                <div class="mb-4">
+                    <label for="vendor_name" class="form-label font-tech text-white fw-bold" style="font-size: 1rem;">
+                        VENDOR ENTITY <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control font-mono py-2" id="vendor_name" name="vendor_name" 
+                           placeholder="e.g. Acme Corp / Cloudflare Technologies" value="{{ form_data.vendor_name if form_data else '' }}" required>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label for="invoice_number" class="form-label font-tech text-white fw-bold" style="font-size: 1rem;">
+                            INVOICE SERIAL # <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control font-mono py-2" id="invoice_number" name="invoice_number" 
+                               placeholder="e.g. INV-2026-09" value="{{ form_data.invoice_number if form_data else '' }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="amount" class="form-label font-tech text-white fw-bold" style="font-size: 1rem;">
+                            AMOUNT (USD) <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text font-mono">$</span>
+                            <input type="number" step="0.01" class="form-control font-mono py-2" id="amount" name="amount" 
+                                   placeholder="0.00" value="{{ form_data.amount if form_data else '' }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label for="due_date" class="form-label font-tech text-white fw-bold" style="font-size: 1rem;">
+                            PAYMENT DUE DATE (ISO 8601) <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control font-mono py-2" id="due_date" name="due_date" 
+                               placeholder="YYYY-MM-DD" value="{{ form_data.due_date if form_data else '' }}" required>
+                        <div class="font-mono text-dim small mt-1" style="font-size: 0.72rem;">
+                            <i class="fa-solid fa-circle-info text-info me-1"></i>Format requirement: YYYY-MM-DD
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="category" class="form-label font-tech text-white fw-bold" style="font-size: 1rem;">
+                            EXPENSE ALLOCATION <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select font-mono py-2" id="category" name="category" required>
+                            <option value="">Select allocation category...</option>
+                            <option value="Cloud Infrastructure" {% if form_data and form_data.category == 'Cloud Infrastructure' %}selected{% endif %}>Cloud Infrastructure</option>
+                            <option value="Software Subscriptions" {% if form_data and form_data.category == 'Software Subscriptions' %}selected{% endif %}>Software Subscriptions</option>
+                            <option value="Consulting & Professional Services" {% if form_data and form_data.category == 'Consulting & Professional Services' %}selected{% endif %}>Consulting & Professional Services</option>
+                            <option value="Hardware & Office Supplies" {% if form_data and form_data.category == 'Hardware & Office Supplies' %}selected{% endif %}>Hardware & Office Supplies</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="description" class="form-label font-tech text-white fw-bold" style="font-size: 1rem;">
+                        MEMO / AUDIT TRAIL ANNOTATIONS
+                    </label>
+                    <textarea class="form-control font-mono" id="description" name="description" rows="3" 
+                              placeholder="Describe line items, purchase order references, or contract milestones">{{ form_data.description if form_data else '' }}</textarea>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center pt-2">
+                    <a href="/invoices" class="btn btn-cyber-outline font-mono">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Return to Ledger
+                    </a>
+                    <button type="submit" id="btn-submit-invoice" class="btn btn-cyber-primary font-hud d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>COMMIT INVOICE RECORD</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Quantum Ledger // AlignWorker ERP{% endblock %}
+
+{% block content %}
+<!-- Hologram Header & Quick Metrics -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="glass-panel p-4 position-relative overflow-hidden">
+            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: radial-gradient(circle, rgba(0, 245, 255, 0.15) 0%, transparent 70%);"></div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="font-mono text-dim" style="font-size: 0.78rem; letter-spacing: 0.05em;">TOTAL LEDGER ENTRIES</span>
+                <span class="cyber-badge badge-cyan"><i class="fa-solid fa-database"></i></span>
+            </div>
+            <div class="font-hud fs-2 fw-bold text-white" id="stat-total-invoices">{{ invoices|length }}</div>
+            <div class="font-mono text-dim small mt-1">
+                <i class="fa-solid fa-arrows-rotate text-info me-1"></i> Live synchronized records
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="glass-panel p-4 position-relative overflow-hidden">
+            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%);"></div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="font-mono text-dim" style="font-size: 0.78rem; letter-spacing: 0.05em;">PENDING SUPERVISOR HITL</span>
+                <span class="cyber-badge badge-violet"><i class="fa-solid fa-user-shield"></i></span>
+            </div>
+            <div class="font-hud fs-2 fw-bold text-warning" id="stat-pending">
+                {{ invoices|selectattr("status", "equalto", "PENDING_APPROVAL")|list|length }}
+            </div>
+            <div class="font-mono text-dim small mt-1">
+                <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Policy threshold: &gt; $5,000.00
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="glass-panel p-4 position-relative overflow-hidden">
+            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);"></div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="font-mono text-dim" style="font-size: 0.78rem; letter-spacing: 0.05em;">VERIFIED &amp; COMMITTED</span>
+                <span class="cyber-badge badge-emerald"><i class="fa-solid fa-check-double"></i></span>
+            </div>
+            <div class="font-hud fs-2 fw-bold text-success" id="stat-entered">
+                {{ invoices|selectattr("status", "equalto", "ENTERED")|list|length }}
+            </div>
+            <div class="font-mono text-dim small mt-1">
+                <i class="fa-solid fa-circle-check text-success me-1"></i> Autonomous agent entered
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ledger Records Glass Panel -->
+<div class="glass-panel overflow-hidden">
+    <div class="p-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-list-check text-info"></i>
+            <h5 class="font-hud fw-bold mb-0 text-white" style="font-size: 1rem; letter-spacing: 0.05em;">
+                ENTERPRISE ERP REPOSITORY
+            </h5>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/agent" class="btn btn-sm btn-cyber-outline font-mono">
+                <i class="fa-solid fa-bolt me-1"></i> Launch Agent Studio
+            </a>
+            <a href="/invoices/new" class="btn btn-sm btn-cyber-primary font-hud" style="font-size: 0.8rem;">
+                <i class="fa-solid fa-plus me-1"></i> Ingest Invoice
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table-cyber mb-0 align-middle" id="invoices-table">
+            <thead>
+                <tr>
+                    <th>Invoice ID</th>
+                    <th>Vendor Entity</th>
+                    <th>Amount (USD)</th>
+                    <th>Due Date</th>
+                    <th>Category</th>
+                    <th>System Status</th>
+                </tr>
+            </thead>
+            <tbody id="invoices-table-body">
+                {% for inv in invoices %}
+                <tr id="row-{{ inv.invoice_number }}">
+                    <td class="font-mono fw-bold"><code class="text-info">{{ inv.invoice_number }}</code></td>
+                    <td class="fw-semibold text-white">{{ inv.vendor_name }}</td>
+                    <td class="font-mono text-warning fw-bold">${{ "%.2f"|format(inv.amount) }}</td>
+                    <td class="font-mono text-dim">{{ inv.due_date }}</td>
+                    <td><span class="cyber-badge badge-violet">{{ inv.category }}</span></td>
+                    <td>
+                        <span class="cyber-badge 
+                            {% if inv.status == 'PAID' %}badge-emerald
+                            {% elif inv.status == 'ENTERED' %}badge-cyan
+                            {% else %}badge-violet{% endif %}">
+                            {{ inv.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Smooth background telemetry polling without screen flickering -->
+<script>
+async function pollLedger() {
+    try {
+        const resp = await fetch('/api/invoices');
+        const data = await resp.json();
+        if (!data || !data.invoices) return;
+
+        const totalEl = document.getElementById('stat-total-invoices');
+        const pendingEl = document.getElementById('stat-pending');
+        const enteredEl = document.getElementById('stat-entered');
+
+        let total = data.invoices.length;
+        let pending = 0;
+        let entered = 0;
+
+        const tbody = document.getElementById('invoices-table-body');
+        let newHtml = '';
+
+        data.invoices.forEach(inv => {
+            if (inv.status === 'PENDING_APPROVAL') pending++;
+            if (inv.status === 'ENTERED') entered++;
+
+            let statusBadge = '';
+            if (inv.status === 'ENTERED') {
+                statusBadge = '<span class="cyber-badge badge-cyan">ENTERED</span>';
+            } else if (inv.status === 'PAID') {
+                statusBadge = '<span class="cyber-badge badge-emerald">PAID</span>';
+            } else {
+                statusBadge = '<span class="cyber-badge badge-violet">' + inv.status + '</span>';
+            }
+
+            newHtml += `
+                <tr id="row-${inv.invoice_number}">
+                    <td class="font-mono fw-bold"><code class="text-info">${inv.invoice_number}</code></td>
+                    <td class="fw-semibold text-white">${inv.vendor_name}</td>
+                    <td class="font-mono text-warning fw-bold">$${Number(inv.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td class="font-mono text-dim">${inv.due_date}</td>
+                    <td><span class="cyber-badge badge-violet">${inv.category}</span></td>
+                    <td>${statusBadge}</td>
+                </tr>
+            `;
+        });
+
+        if (totalEl) totalEl.innerText = total;
+        if (pendingEl) pendingEl.innerText = pending;
+        if (enteredEl) enteredEl.innerText = entered;
+        if (tbody) tbody.innerHTML = newHtml;
+
+    } catch (e) {
+        console.warn('Poll ledger heartbeat:', e);
+    }
+}
+setInterval(pollLedger, 3000);
+</script>
+{% endblock %}

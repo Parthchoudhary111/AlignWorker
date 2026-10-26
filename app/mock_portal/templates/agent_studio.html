@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Neural Studio // AlignWorker{% endblock %}
+
+{% block content %}
+<!-- Section 1: Command Terminal Deck -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="glass-panel p-4 position-relative overflow-hidden" style="background: linear-gradient(135deg, rgba(14, 21, 38, 0.95) 0%, rgba(18, 16, 36, 0.92) 100%);">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width: 42px; height: 42px; background: rgba(0, 245, 255, 0.12); border: 1px solid var(--cyan-core); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 14px rgba(0, 245, 255, 0.25);">
+                        <i class="fa-solid fa-microchip text-info fs-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-hud text-white mb-0" style="font-size: 1.2rem;">
+                            AUTONOMOUS AGENT <span style="color: var(--cyan-core);">COMMAND CONSOLE</span>
+                        </h4>
+                        <div class="font-mono text-dim" style="font-size: 0.72rem;">
+                            REASONING REACT ENGINE &bull; PLAYWRIGHT CHROMIUM CONTROLLER &bull; OUTCOME AUDIT
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <span class="cyber-badge badge-cyan font-mono" id="agent-status-badge">
+                        <i class="fa-solid fa-satellite me-1"></i> STANDBY // READY
+                    </span>
+                </div>
+            </div>
+
+            <!-- Command Input Box -->
+            <div class="mb-3">
+                <div class="input-group input-group-lg" style="box-shadow: 0 0 20px rgba(0, 245, 255, 0.12); border-radius: 8px; overflow: hidden;">
+                    <span class="input-group-text font-mono" style="background: rgba(10, 16, 28, 0.95); border-color: rgba(0, 245, 255, 0.3); color: var(--cyan-core); font-size: 0.88rem;">
+                        <i class="fa-solid fa-terminal me-2"></i>GOAL&gt;
+                    </span>
+                    <input type="text" id="task-input" class="form-control font-mono py-3" 
+                           value="Navigate to http://127.0.0.1:8000/invoices/new and create an invoice for vendor 'NVIDIA AI Systems' with amount $18,400.00 and due date 2026-12-15 under Hardware & Office Supplies, and submit."
+                           placeholder="Enter high-level objective..."
+                           style="background: rgba(8, 12, 22, 0.95); font-size: 0.92rem;">
+                    <button class="btn btn-cyber-primary px-4 font-hud d-flex align-items-center gap-2" id="btn-run-task" onclick="runAgentTask()">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>EXECUTE</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Presets Row -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-1">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span class="font-tech text-dim fw-bold me-1" style="font-size: 0.85rem; text-transform: uppercase;">
+                        Quick Presets:
+                    </span>
+                    <button class="btn btn-sm btn-cyber-outline" onclick="setPreset('nvidia')">
+                        <i class="fa-solid fa-microchip me-1 text-info"></i> NVIDIA AI ($18,400)
+                    </button>
+                    <button class="btn btn-sm btn-cyber-outline" onclick="setPreset('acme')">
+                        <i class="fa-regular fa-file-pdf me-1 text-danger"></i> Acme Corp PDF
+                    </button>
+                    <button class="btn btn-sm btn-cyber-outline" onclick="setPreset('apex')">
+                        <i class="fa-solid fa-rotate me-1 text-success"></i> Date Self-Correction
+                    </button>
+                </div>
+                <button class="btn btn-sm btn-outline-danger font-mono" style="border-radius: 6px; font-size: 0.78rem;" onclick="resetDatabase()">
+                    <i class="fa-solid fa-trash-can me-1"></i> Reset DB
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 2: Real-time Execution Deck (Side-by-Side: Brain & Eyes) -->
+<div class="row g-4 mb-4">
+    <!-- Left Column: Neural Reasoning & ReAct Stream -->
+    <div class="col-lg-7">
+        <div class="glass-panel h-100 d-flex flex-column" style="min-height: 480px;">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-brain text-info"></i>
+                    <span class="font-hud fw-bold text-white" style="font-size: 0.9rem; letter-spacing: 0.05em;">
+                        NEURAL REASONING TRACE
+                    </span>
+                </div>
+                <span class="font-mono text-dim" style="font-size: 0.72rem;">REACT DECOMPOSITION</span>
+            </div>
+
+            <div class="p-3 flex-grow-1" id="trace-container" style="max-height: 440px; overflow-y: auto;">
+                <div class="text-center py-5 my-3" id="trace-placeholder">
+                    <div class="mb-3">
+                        <div style="width: 56px; height: 56px; margin: 0 auto; border-radius: 50%; background: rgba(0, 245, 255, 0.05); border: 1px dashed rgba(0, 245, 255, 0.3); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-satellite-dish text-info fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="font-hud text-white fs-6 mb-1">IDLE &bull; AWAITING INSTRUCTION</div>
+                    <p class="font-mono text-dim small mb-0">
+                        Select a preset or type an instruction above to launch the autonomous agent loop.
+                    </p>
+                </div>
+                
+                <div id="trace-steps" class="d-flex flex-column gap-3"></div>
+            </div>
+
+            <div class="p-3 border-top" id="trace-footer" style="display: none; border-color: rgba(255, 255, 255, 0.08) !important; background: rgba(8, 12, 22, 0.8);">
+                <div id="final-summary-box"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Live Chromium Viewport Feed -->
+    <div class="col-lg-5">
+        <div class="glass-panel h-100 d-flex flex-column overflow-hidden" style="min-height: 480px;">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-eye text-info"></i>
+                    <span class="font-hud fw-bold text-white" style="font-size: 0.9rem; letter-spacing: 0.05em;">
+                        OPTICAL FEED (CHROMIUM)
+                    </span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="radar-dot" style="width: 7px; height: 7px;"></span>
+                    <span id="screenshot-timestamp" class="font-mono text-dim" style="font-size: 0.72rem;">1280x800 HEADLESS</span>
+                </div>
+            </div>
+
+            <div class="position-relative p-2 flex-grow-1 d-flex align-items-center justify-content-center" style="background: #04070e;">
+                <img id="browser-screenshot" src="/static/evidence/final_state.png" 
+                     class="img-fluid rounded border border-dark" 
+                     style="max-height: 380px; width: 100%; object-fit: contain; box-shadow: 0 0 16px rgba(0,0,0,0.8);"
+                     onerror="this.style.display='none'; document.getElementById('screenshot-fallback').style.display='block';">
+                
+                <div id="screenshot-fallback" class="p-4 font-mono text-dim text-center" style="display: none;">
+                    <i class="fa-solid fa-video-slash fs-2 mb-2 d-block text-secondary"></i>
+                    Live browser frame will appear here upon first page navigation.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 3: Full-Width ERP Quantum Ledger Table -->
+<div class="row g-4">
+    <div class="col-12">
+        <div class="glass-panel overflow-hidden">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-database text-info"></i>
+                    <span class="font-hud fw-bold text-white" style="font-size: 0.92rem; letter-spacing: 0.05em;">
+                        ERP REPOSITORY LEDGER (<code style="color: var(--cyan-core);">erp.db</code>)
+                    </span>
+                </div>
+                <button class="btn btn-sm btn-cyber-outline py-1 px-3 font-mono" style="font-size: 0.76rem;" onclick="refreshInvoicesTable()">
+                    <i class="fa-solid fa-arrows-rotate me-1"></i> REFRESH LEDGER
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table-cyber mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 18%;">Invoice #</th>
+                            <th style="width: 28%;">Vendor Entity</th>
+                            <th style="width: 18%;">Amount (USD)</th>
+                            <th style="width: 18%;">Due Date</th>
+                            <th style="width: 18%;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoices-tbody">
+                        <tr><td colspan="5" class="text-center py-3 text-dim font-mono">Synchronizing ledger records...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function setPreset(type) {
+    const input = document.getElementById('task-input');
+    if (type === 'nvidia') {
+        input.value = "Navigate to /invoices/new and create an invoice for vendor 'NVIDIA AI Systems' with amount $18,400.00 and due date 2026-12-15 under Hardware & Office Supplies, and submit.";
+    } else if (type === 'acme') {
+        input.value = "Read invoice_acme_corp.pdf from sample_data, navigate to /invoices/new, enter the details, and verify.";
+    } else if (type === 'apex') {
+        input.value = "Read invoice_apex_logistics.pdf, navigate to /invoices/new, fill the form, recover from any date errors, and verify.";
+    }
+}
+
+async function refreshInvoicesTable() {
+    try {
+        const resp = await fetch('/api/invoices');
+        const data = await resp.json();
+        const tbody = document.getElementById('invoices-tbody');
+        tbody.innerHTML = '';
+        if (!data.invoices || data.invoices.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-dim font-mono">No records present in ERP database.</td></tr>';
+            return;
+        }
+        data.invoices.forEach(inv => {
+            const tr = document.createElement('tr');
+            let statusBadge = '';
+            if (inv.status === 'ENTERED') {
+                statusBadge = '<span class="cyber-badge badge-cyan">ENTERED</span>';
+            } else if (inv.status === 'PAID') {
+                statusBadge = '<span class="cyber-badge badge-emerald">PAID</span>';
+            } else {
+                statusBadge = '<span class="cyber-badge badge-violet">' + inv.status + '</span>';
+            }
+
+            tr.innerHTML = `
+                <td><code class="text-info fw-bold">${inv.invoice_number}</code></td>
+                <td class="fw-semibold text-white">${inv.vendor_name}</td>
+                <td class="font-mono text-warning fw-bold">$${Number(inv.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td class="font-mono text-dim">${inv.due_date}</td>
+                <td>${statusBadge}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('Failed to sync invoices table:', err);
+    }
+}
+
+async function resetDatabase() {
+    if (!confirm('Purge and reset ERP database ledger to initial seeded state?')) return;
+    try {
+        await fetch('/api/reset', { method: 'POST' });
+        await refreshInvoicesTable();
+    } catch (err) {
+        alert('Failed to reset database: ' + err);
+    }
+}
+
+async function runAgentTask() {
+    const input = document.getElementById('task-input');
+    const prompt = input.value.trim();
+    if (!prompt) return;
+
+    const btn = document.getElementById('btn-run-task');
+    const badge = document.getElementById('agent-status-badge');
+    const placeholder = document.getElementById('trace-placeholder');
+    const stepsDiv = document.getElementById('trace-steps');
+    const footer = document.getElementById('trace-footer');
+    const summaryBox = document.getElementById('final-summary-box');
+
+    // UI state: Running
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>RUNNING...</span>';
+    badge.className = 'cyber-badge badge-violet font-mono';
+    badge.innerHTML = '<i class="fa-solid fa-gear fa-spin me-1"></i> ACTIVE // REASONING';
+    placeholder.style.display = 'none';
+    stepsDiv.innerHTML = `
+        <div class="p-3 rounded font-mono text-info" style="background: rgba(0, 245, 255, 0.08); border-left: 3px solid var(--cyan-core); font-size: 0.82rem;">
+            <i class="fa-solid fa-bolt me-2"></i>Launching Playwright Chromium &amp; analyzing trajectory...
+        </div>
+    `;
+    footer.style.display = 'none';
+
+    try {
+        const startTime = Date.now();
+        const response = await fetch('/api/agent/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: prompt })
+        });
+
+        const result = await response.json();
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+        // Render steps
+        stepsDiv.innerHTML = '';
+        if (result.steps && result.steps.length > 0) {
+            result.steps.forEach(s => {
+                const stepCard = document.createElement('div');
+                stepCard.className = 'p-3 rounded';
+                stepCard.style.background = 'rgba(12, 19, 36, 0.85)';
+                stepCard.style.border = '1px solid rgba(0, 245, 255, 0.15)';
+                stepCard.style.borderLeft = '3px solid var(--cyan-core)';
+
+                let obsText = typeof s.observation === 'object' ? JSON.stringify(s.observation) : String(s.observation);
+                if (obsText.length > 200) obsText = obsText.substring(0, 200) + '...';
+
+                stepCard.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="font-hud text-info fw-bold" style="font-size: 0.8rem;">
+                            STEP 0${s.step_number} &bull; <code class="text-white">${s.action}</code>
+                        </span>
+                        <span class="cyber-badge badge-cyan" style="font-size: 0.62rem; padding: 2px 6px;">COMPLETED</span>
+                    </div>
+                    <div class="small text-light mb-1" style="font-size: 0.82rem;">
+                        <span class="text-dim font-mono fw-bold">THOUGHT:</span> ${s.thought}
+                    </div>
+                    <div class="font-mono text-dim small p-2 rounded" style="background: rgba(4, 7, 14, 0.7); font-size: 0.74rem;">
+                        <span class="text-warning fw-bold">OBSERVATION:</span> ${obsText}
+                    </div>
+                `;
+                stepsDiv.appendChild(stepCard);
+            });
+        }
+
+        // Render summary and badges
+        footer.style.display = 'block';
+        if (result.success) {
+            badge.className = 'cyber-badge badge-emerald font-mono';
+            badge.innerHTML = '<i class="fa-solid fa-check-circle me-1"></i> VERIFIED';
+            summaryBox.innerHTML = `
+                <div class="p-3 rounded font-mono" style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--emerald-core); color: #fff;">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="font-hud fw-bold text-success" style="font-size: 0.88rem;"><i class="fa-solid fa-circle-check me-2"></i>GOAL COMPLETED &amp; VERIFIED</span>
+                        <span class="cyber-badge badge-emerald font-mono" style="font-size: 0.65rem;">${elapsed}s &bull; ${result.total_steps} STEPS</span>
+                    </div>
+                    <div class="small mb-1" style="font-size: 0.82rem;">${result.summary}</div>
+                    <div class="text-dim small pt-1 border-top border-secondary" style="font-size: 0.72rem;">
+                        <i class="fa-solid fa-certificate text-info me-1"></i> Independent SQLite outcome verified
+                    </div>
+                </div>
+            `;
+        } else {
+            badge.className = 'cyber-badge badge-rose font-mono';
+            badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> HALTED';
+            summaryBox.innerHTML = `
+                <div class="p-3 rounded font-mono" style="background: rgba(244, 63, 94, 0.1); border: 1px solid var(--rose-core); color: #fff;">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="font-hud fw-bold text-danger" style="font-size: 0.88rem;"><i class="fa-solid fa-circle-xmark me-2"></i>TASK HALTED</span>
+                        <span class="cyber-badge badge-rose font-mono" style="font-size: 0.65rem;">${elapsed}s</span>
+                    </div>
+                    <div class="small" style="font-size: 0.82rem;">${result.summary}</div>
+                </div>
+            `;
+        }
+
+        // Update screenshot
+        const img = document.getElementById('browser-screenshot');
+        const fallback = document.getElementById('screenshot-fallback');
+        if (result.screenshot_url) {
+            img.src = result.screenshot_url + '?t=' + Date.now();
+            img.style.display = 'block';
+            fallback.style.display = 'none';
+        }
+
+        // Refresh invoices table
+        await refreshInvoicesTable();
+
+    } catch (err) {
+        badge.className = 'cyber-badge badge-rose font-mono';
+        badge.innerText = 'ERROR';
+        stepsDiv.innerHTML += `<div class="p-2 font-mono text-danger">Request failed: ${err.message}</div>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-bolt"></i><span>EXECUTE</span>';
+    }
+}
+
+// Initial load
+window.addEventListener('DOMContentLoaded', () => {
+    refreshInvoicesTable();
+});
+</script>
+{% endblock %}
